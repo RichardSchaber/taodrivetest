@@ -1,0 +1,118 @@
+<apex:page standardController="Opportunity" extensions="jquery_minihack">
+<apex:includeScript value="{!URLFOR($Resource.jQuery, 'js/jquery-1.11.0.min.js')}"/>
+<apex:includeScript value="{!URLFOR($Resource.jQuery, 'js/jquery-ui-1.10.4.custom.min.js')}"/>
+<apex:stylesheet value="{!URLFOR($Resource.jQuery, 'css/ui-lightness/jquery-ui-1.10.4.custom.css')}"/>
+    
+<script type="text/javascript">
+var j$ = jQuery.noConflict();
+
+j$(document).ready(function(){
+    j$("#floatingDiv").hide();
+    
+    j$(".draggableRow").draggable({
+   		helper: "clone"
+    })
+        
+    j$("#droppableArea").droppable({
+        drop: function( event, ui ) {
+            j$("#floatingDiv").show();
+        }
+    })
+});
+   
+function clickedRow(tableRow) {
+    var idx = tableRow.rowIndex;
+    setRowIndex(idx);
+}
+    
+function hideFloatingDiv(){
+    j$("#floatingDiv").hide();
+}    
+</script> 
+
+<style>
+    #floatingDiv {
+        position:fixed;
+        top: 50%;
+        left: 50%;
+        width:30em;
+        height:18em;
+        margin-top: -9em; /*set to a negative number 1/2 of your height*/
+        margin-left: -15em; /*set to a negative number 1/2 of your width*/
+        border: 1px solid #ccc;
+        background-color: #f3f3f3;
+	}
+	#myTitle {
+		font-size:20px;
+		text-align: center;
+		
+	}
+	
+	.element {
+		width:50%;
+		float:left;
+	}
+	
+	.droppableArea {
+		height:200px;
+		background: #CCC;
+		font-weight:bold;
+	}
+</style>
+
+<apex:detail id="mainDetail" subject="{!theOpp.Id}" relatedList="true"/>
+    
+<apex:form >
+
+    <apex:actionFunction action="{!setDraggedProduct}" rerender="floatingDivPageBlock"  name="setRowIndex">
+        <apex:param assignTo="{!draggedRowIndex}" name="param" value="" />
+    </apex:actionFunction>
+    
+    <!-- pop up that shows up when a product is dragged into the right hand table -->
+    <div id="floatingDiv">
+        <apex:pageBlock id="floatingDivPageBlock" title="Choose Product Price and Quantity">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Add" onclick="hideFloatingDiv();" action="{!addProduct}" rerender="addProductsSection"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection >
+                <p><apex:inputText label="Quantity" value="{!dragProduct.Quantity}" /></p>
+	            <p><apex:inputText label="Price" value="{!dragProduct.SalesPrice}" /></p>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </div>
+	
+	<div style="width:100%;">
+		<div class="element">
+			<apex:pageBlock title="Drag Products From Here">
+				<apex:pageBlockTable onRowMouseDown="clickedRow(this)"  id="dragSection" rowClasses="draggableRow" var="p" value="{!allProducts}">
+					<apex:column value="{!p.prod.Name}" />
+					<apex:column value="{!p.prod.Product2.ProductCode}" />
+				</apex:pageBlockTable> 
+			</apex:pageBlock>
+		</div>
+        
+		<div id="droppableArea" class="element">
+			<apex:outputPanel id="addProductsSection">
+				<apex:outputPanel >
+					<apex:pageBlock title="Drop Products Here" >
+						<apex:pageBlockButtons >
+							<apex:commandButton value="Add" reRender="mainDetail" action="{!createLineItems}" />
+						</apex:pageBlockButtons>
+						<apex:pageBlockTable rowClasses="myClass" var="p" value="{!selectedProducts}">
+							<apex:column headerValue="Product Name" >
+								<apex:outputField value="{!p.prod.Name}" />
+							</apex:column>
+							<apex:column headerValue="Quantity">
+								<apex:inputText value="{!p.Quantity}" />
+							</apex:column>
+							<apex:column headerValue="Sales Price">
+								<apex:inputText value="{!p.SalesPrice}" />
+							</apex:column>
+						</apex:pageBlockTable> 
+					</apex:pageBlock>
+				</apex:outputPanel>
+			</apex:outputPanel>
+		</div>
+	</div>
+</apex:form>
+</apex:page>
